@@ -6,9 +6,21 @@ from fastmcp import FastMCP
 from typing import Optional, List, Dict, Any
 import os
 import sys
+import logging
+from datetime import datetime
 from dotenv import load_dotenv
 
 from servicenow_client import ServiceNowClient
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
@@ -19,20 +31,21 @@ mcp = FastMCP("ServiceNow Operations")
 # Initialize ServiceNow client with error handling
 try:
     snow_client = ServiceNowClient()
-    print("✓ ServiceNow client initialized successfully")
+    logger.info("✓ ServiceNow client initialized successfully")
+    logger.info(f"Connected to instance: {os.getenv('SERVICENOW_INSTANCE', 'Unknown')}")
 except ValueError as e:
-    print(f"✗ Configuration Error: {e}")
-    print("\nPlease configure the following environment variables in Render:")
-    print("1. Go to your Render dashboard")
-    print("2. Select your web service")
-    print("3. Go to Environment tab")
-    print("4. Add the following environment variables:")
-    print("   - SERVICENOW_INSTANCE (e.g., dev12345.service-now.com)")
-    print("   - SERVICENOW_USERNAME")
-    print("   - SERVICENOW_PASSWORD")
+    logger.error(f"✗ Configuration Error: {e}")
+    logger.error("\nPlease configure the following environment variables in Render:")
+    logger.error("1. Go to your Render dashboard")
+    logger.error("2. Select your web service")
+    logger.error("3. Go to Environment tab")
+    logger.error("4. Add the following environment variables:")
+    logger.error("   - SERVICENOW_INSTANCE (e.g., dev12345)")
+    logger.error("   - SERVICENOW_USERNAME")
+    logger.error("   - SERVICENOW_PASSWORD")
     sys.exit(1)
 except Exception as e:
-    print(f"✗ Unexpected error initializing ServiceNow client: {e}")
+    logger.error(f"✗ Unexpected error initializing ServiceNow client: {e}")
     sys.exit(1)
 
 
@@ -53,14 +66,17 @@ def search_tickets(query: str, limit: int = 10) -> Dict[str, Any]:
     Example:
         search_tickets("network issue", limit=5)
     """
+    logger.info(f"🔍 search_tickets called - query: '{query}', limit: {limit}")
     try:
         if limit < 1 or limit > 100:
+            logger.warning(f"Invalid limit value: {limit}")
             return {
                 "success": False,
                 "error": "Limit must be between 1 and 100"
             }
         
         tickets = snow_client.search_tickets(query=query, limit=limit)
+        logger.info(f"✓ Found {len(tickets)} tickets matching query '{query}'")
         return {
             "success": True,
             "count": len(tickets),
@@ -68,6 +84,7 @@ def search_tickets(query: str, limit: int = 10) -> Dict[str, Any]:
             "tickets": tickets
         }
     except Exception as e:
+        logger.error(f"✗ Error searching tickets: {str(e)}")
         return {
             "success": False,
             "error": str(e)
@@ -103,8 +120,10 @@ def create_ticket(
             category="hardware"
         )
     """
+    logger.info(f"📝 create_ticket called - short_description: '{short_description}', priority: {priority}, category: {category}")
     try:
         if priority < 1 or priority > 5:
+            logger.warning(f"Invalid priority value: {priority}")
             return {
                 "success": False,
                 "error": "Priority must be between 1 and 5"
@@ -117,12 +136,15 @@ def create_ticket(
             caller_id=caller_id,
             category=category
         )
+        ticket_number = ticket.get('number', 'Unknown')
+        logger.info(f"✓ Ticket {ticket_number} created successfully")
         return {
             "success": True,
-            "message": f"Ticket {ticket.get('number')} created successfully",
+            "message": f"Ticket {ticket_number} created successfully",
             "ticket": ticket
         }
     except Exception as e:
+        logger.error(f"✗ Error creating ticket: {str(e)}")
         return {
             "success": False,
             "error": str(e)
@@ -143,20 +165,24 @@ def get_all_tickets(limit: int = 50) -> Dict[str, Any]:
     Example:
         get_all_tickets(limit=20)
     """
+    logger.info(f"📋 get_all_tickets called - limit: {limit}")
     try:
         if limit < 1 or limit > 100:
+            logger.warning(f"Invalid limit value: {limit}")
             return {
                 "success": False,
                 "error": "Limit must be between 1 and 100"
             }
         
         tickets = snow_client.get_all_tickets(limit=limit)
+        logger.info(f"✓ Retrieved {len(tickets)} tickets")
         return {
             "success": True,
             "count": len(tickets),
             "tickets": tickets
         }
     except Exception as e:
+        logger.error(f"✗ Error retrieving tickets: {str(e)}")
         return {
             "success": False,
             "error": str(e)
@@ -185,28 +211,31 @@ def get_priority_tickets(priority: int = 1, limit: int = 20) -> Dict[str, Any]:
     Example:
         get_priority_tickets(priority=1, limit=10)
     """
+    priority_names = {
+        1: "Critical",
+        2: "High",
+        3: "Moderate",
+        4: "Low",
+        5: "Planning"
+    }
+    logger.info(f"🎯 get_priority_tickets called - priority: {priority} ({priority_names.get(priority, 'Unknown')}), limit: {limit}")
     try:
         if priority < 1 or priority > 5:
+            logger.warning(f"Invalid priority value: {priority}")
             return {
                 "success": False,
                 "error": "Priority must be between 1 and 5"
             }
         
         if limit < 1 or limit > 100:
+            logger.warning(f"Invalid limit value: {limit}")
             return {
                 "success": False,
                 "error": "Limit must be between 1 and 100"
             }
         
         tickets = snow_client.get_priority_tickets(priority=priority, limit=limit)
-        
-        priority_names = {
-            1: "Critical",
-            2: "High",
-            3: "Moderate",
-            4: "Low",
-            5: "Planning"
-        }
+        logger.info(f"✓ Found {len(tickets)} tickets with priority {priority} ({priority_names.get(priority)})")
         
         return {
             "success": True,
@@ -216,6 +245,7 @@ def get_priority_tickets(priority: int = 1, limit: int = 20) -> Dict[str, Any]:
             "tickets": tickets
         }
     except Exception as e:
+        logger.error(f"✗ Error retrieving priority tickets: {str(e)}")
         return {
             "success": False,
             "error": str(e)
@@ -236,20 +266,24 @@ def get_ticket_by_number(ticket_number: str) -> Dict[str, Any]:
     Example:
         get_ticket_by_number("INC0010001")
     """
+    logger.info(f"🎫 get_ticket_by_number called - ticket_number: {ticket_number}")
     try:
         ticket = snow_client.get_ticket_by_number(ticket_number)
         
         if ticket is None:
+            logger.warning(f"Ticket {ticket_number} not found")
             return {
                 "success": False,
                 "error": f"Ticket {ticket_number} not found"
             }
         
+        logger.info(f"✓ Retrieved ticket {ticket_number}")
         return {
             "success": True,
             "ticket": ticket
         }
     except Exception as e:
+        logger.error(f"✗ Error retrieving ticket {ticket_number}: {str(e)}")
         return {
             "success": False,
             "error": str(e)
@@ -269,6 +303,7 @@ def get_ticket_statistics() -> Dict[str, Any]:
     Example:
         get_ticket_statistics()
     """
+    logger.info("📊 get_ticket_statistics called")
     try:
         stats = {
             "success": True,
@@ -292,11 +327,14 @@ def get_ticket_statistics() -> Dict[str, Any]:
                 "priority_level": priority,
                 "count": count
             }
+            logger.info(f"  - {priority_names[priority]}: {count} tickets")
         
         stats["total_tickets"] = total_count
+        logger.info(f"✓ Total tickets: {total_count}")
         return stats
         
     except Exception as e:
+        logger.error(f"✗ Error retrieving ticket statistics: {str(e)}")
         return {
             "success": False,
             "error": str(e)
