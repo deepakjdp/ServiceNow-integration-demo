@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "servicenow": {
+      "command": "python",
+      "args": [
+        "/path/to/servicenow_sse_demo/fastmcp_server.py"
+      ],
+      "env": {
+        "SERVICENOW_INSTANCE": "your-instance.service-now.com",
+        "SERVICENOW_USERNAME": "your-username",
+        "SERVICENOW_PASSWORD": "your-password"
+      }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+services:
+  # FastMCP Server for ServiceNow
+  - type: web
+    name: servicenow-mcp-server
+    env: python
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: python fastmcp_server_render.py
+    envVars:
+      - key: SERVICENOW_INSTANCE
+        sync: false
+      - key: SERVICENOW_USERNAME
+        sync: false
+      - key: SERVICENOW_PASSWORD
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: PORT
+        value: 10000
+      - key: HOST
+        value: 0.0.0.0
+
+# Made with Bob

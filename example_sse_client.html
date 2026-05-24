@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCP Server SSE Client</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .stop-btn {
+            background-color: #dc3545;
+        }
+        .stop-btn:hover {
+            background-color: #c82333;
+        }
+        #status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .status-connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .status-connecting {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        #output {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            height: 500px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        .event {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-left: 3px solid #007bff;
+            background-color: white;
+        }
+        .event-connected {
+            border-left-color: #28a745;
+        }
+        .event-ticket {
+            border-left-color: #007bff;
+        }
+        .event-complete {
+            border-left-color: #17a2b8;
+        }
+        .event-error {
+            border-left-color: #dc3545;
+            background-color: #fff5f5;
+        }
+        .event-type {
+            font-weight: bold;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+        .event-data {
+            color: #212529;
+        }
+        .ticket-info {
+            margin-left: 10px;
+            padding: 5px;
+            background-color: #f8f9fa;
+            border-radius: 3px;
+        }
+        input[type="text"], input[type="number"] {
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        label {
+            margin-right: 5px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 MCP Server SSE Client</h1>
+    
+    <div class="container">
+        <h2>Server-Sent Events Demo</h2>
+        <div id="status" class="status-disconnected">Disconnected</div>
+        
+        <div class="controls">
+            <button onclick="streamAllTickets()">Stream All Tickets</button>
+            <button onclick="streamPriorityTickets()">Stream Priority Tickets</button>
+            <button onclick="streamSearchResults()">Stream Search Results</button>
+            <button onclick="clearOutput()">Clear Output</button>
+            <button class="stop-btn" onclick="stopStream()" id="stopBtn" disabled>Stop Stream</button>
+        </div>
+        
+        <div class="controls">
+            <label>Limit:</label>
+            <input type="number" id="limitInput" value="10" min="1" max="100">
+            
+            <label>Priority:</label>
+            <input type="number" id="priorityInput" value="1" min="1" max="5">
+            
+            <label>Search Query:</label>
+            <input type="text" id="searchInput" value="network" placeholder="Enter search term">
+        </div>
+        
+        <div id="output"></div>
+    </div>
+
+    <script>
+        let eventSource = null;
+        const output = document.getElementById('output');
+        const status = document.getElementById('status');
+        const stopBtn = document.getElementById('stopBtn');
+        const baseUrl = 'http://localhost:8000';
+
+        function updateStatus(message, className) {
+            status.textContent = message;
+            status.className = className;
+        }
+
+        function addEvent(type, data) {
+            const eventDiv = document.createElement('div');
+            eventDiv.className = `event event-${type}`;
+            
+            const typeDiv = document.createElement('div');
+            typeDiv.className = 'event-type';
+            typeDiv.textContent = `[${type.toUpperCase()}]`;
+            
+            const dataDiv = document.createElement('div');
+            dataDiv.className = 'event-data';
+            
+            if (typeof data === 'object') {
+                if (type === 'ticket' && data.ticket) {
+                    const ticket = data.ticket;
+                    dataDiv.innerHTML = `
+                        <strong>Ticket #${data.index}</strong>
+                        <div class="ticket-info">
+                            <div><strong>Number:</strong> ${ticket.number}</div>
+                            <div><strong>Description:</strong> ${ticket.short_description}</div>
+                            <div><strong>Priority:</strong> ${ticket.priority}</div>
+                            <div><strong>State:</strong> ${ticket.state}</div>
+                            <div><strong>Created:</strong> ${ticket.created_on}</div>
+                        </div>
+                    `;
+                } else {
+                    dataDiv.textContent = JSON.stringify(data, null, 2);
+                }
+            } else {
+                dataDiv.textContent = data;
+            }
+            
+            eventDiv.appendChild(typeDiv);
+            eventDiv.appendChild(dataDiv);
+            output.appendChild(eventDiv);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function stopStream() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+                updateStatus('Disconnected', 'status-disconnected');
+                stopBtn.disabled = true;
+                addEvent('info', 'Stream stopped by user');
+            }
+        }
+
+        function startStream(url) {
+            if (eventSource) {
+                stopStream();
+            }
+
+            updateStatus('Connecting...', 'status-connecting');
+            stopBtn.disabled = false;
+
+            eventSource = new EventSource(url);
+
+            eventSource.addEventListener('connected', (e) => {
+                updateStatus('Connected', 'status-connected');
+                const data = JSON.parse(e.data);
+                addEvent('connected', data);
+            });
+
+            eventSource.addEventListener('count', (e) => {
+                const data = JSON.parse(e.data);
+                addEvent('count', data);
+            });
+
+            eventSource.addEventListener('ticket', (e) => {
+                const data = JSON.parse(e.data);
+                addEvent('ticket', data);
+            });
+
+            eventSource.addEventListener('complete', (e) => {
+                const data = JSON.parse(e.data);
+                addEvent('complete', data);
+                stopStream();
+            });
+
+            eventSource.addEventListener('error', (e) => {
+                if (e.data) {
+                    const data = JSON.parse(e.data);
+                    addEvent('error', data);
+                } else {
+                    addEvent('error', 'Connection error occurred');
+                }
+                stopStream();
+            });
+
+            eventSource.onerror = (e) => {
+                addEvent('error', 'Failed to connect to server');
+                stopStream();
+            };
+        }
+
+        function streamAllTickets() {
+            const limit = document.getElementById('limitInput').value;
+            const url = `${baseUrl}/tickets/stream/all?limit=${limit}`;
+            addEvent('info', `Starting stream: All tickets (limit: ${limit})`);
+            startStream(url);
+        }
+
+        function streamPriorityTickets() {
+            const priority = document.getElementById('priorityInput').value;
+            const limit = document.getElementById('limitInput').value;
+            const url = `${baseUrl}/tickets/stream/priority/${priority}?limit=${limit}`;
+            addEvent('info', `Starting stream: Priority ${priority} tickets (limit: ${limit})`);
+            startStream(url);
+        }
+
+        function streamSearchResults() {
+            const query = document.getElementById('searchInput').value;
+            const limit = document.getElementById('limitInput').value;
+            const url = `${baseUrl}/tickets/stream/search?query=${encodeURIComponent(query)}&limit=${limit}`;
+            addEvent('info', `Starting stream: Search for "${query}" (limit: ${limit})`);
+            startStream(url);
+        }
+
+        function clearOutput() {
+            output.innerHTML = '';
+        }
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            if (eventSource) {
+                eventSource.close();
+            }
+        });
+    </script>
+</body>
+</html>
