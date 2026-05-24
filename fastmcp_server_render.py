@@ -263,7 +263,7 @@ def get_priority_tickets(priority: int = 1, limit: int = 20) -> Dict[str, Any]:
 
 
 @mcp.tool()
-def get_ticket_by_number(ticket_number: str) -> Dict[str, Any]:
+def get_ticket_by_number(ticket_number: str, **kwargs) -> Dict[str, Any]:
     """
     Retrieve a specific ticket by its ticket number.
     
@@ -278,6 +278,7 @@ def get_ticket_by_number(ticket_number: str) -> Dict[str, Any]:
     """
     logger.info(f"🎫 get_ticket_by_number called - ticket_number: {ticket_number}")
     try:
+        # Ignore any extra parameters passed by the client
         ticket = snow_client.get_ticket_by_number(ticket_number)
         
         if ticket is None:
