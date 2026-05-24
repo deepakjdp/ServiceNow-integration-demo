@@ -37,6 +37,9 @@ def search_tickets(query: str, limit: int = 10) -> Dict[str, Any]:
         search_tickets("network issue", limit=5)
     """
     try:
+        # Convert limit to int if it's a string
+        limit = int(limit)
+        
         if limit < 1 or limit > 100:
             return {
                 "success": False,
@@ -127,6 +130,9 @@ def get_all_tickets(limit: int = 50) -> Dict[str, Any]:
         get_all_tickets(limit=20)
     """
     try:
+        # Convert limit to int if it's a string
+        limit = int(limit)
+        
         if limit < 1 or limit > 100:
             return {
                 "success": False,
@@ -169,6 +175,10 @@ def get_priority_tickets(priority: int = 1, limit: int = 20) -> Dict[str, Any]:
         get_priority_tickets(priority=1, limit=10)
     """
     try:
+        # Convert parameters to int if they're strings
+        priority = int(priority)
+        limit = int(limit)
+        
         if priority < 1 or priority > 5:
             return {
                 "success": False,

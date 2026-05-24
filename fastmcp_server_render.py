@@ -68,6 +68,9 @@ def search_tickets(query: str, limit: int = 10) -> Dict[str, Any]:
     """
     logger.info(f"🔍 search_tickets called - query: '{query}', limit: {limit}")
     try:
+        # Convert limit to int if it's a string
+        limit = int(limit)
+        
         if limit < 1 or limit > 100:
             logger.warning(f"Invalid limit value: {limit}")
             return {
@@ -167,6 +170,9 @@ def get_all_tickets(limit: int = 50) -> Dict[str, Any]:
     """
     logger.info(f"📋 get_all_tickets called - limit: {limit}")
     try:
+        # Convert limit to int if it's a string
+        limit = int(limit)
+        
         if limit < 1 or limit > 100:
             logger.warning(f"Invalid limit value: {limit}")
             return {
@@ -220,6 +226,10 @@ def get_priority_tickets(priority: int = 1, limit: int = 20) -> Dict[str, Any]:
     }
     logger.info(f"🎯 get_priority_tickets called - priority: {priority} ({priority_names.get(priority, 'Unknown')}), limit: {limit}")
     try:
+        # Convert parameters to int if they're strings
+        priority = int(priority)
+        limit = int(limit)
+        
         if priority < 1 or priority > 5:
             logger.warning(f"Invalid priority value: {priority}")
             return {
