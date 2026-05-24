@@ -5,6 +5,7 @@ Model Context Protocol server that exposes ServiceNow operations as tools
 from fastmcp import FastMCP
 from typing import Optional, List, Dict, Any
 import os
+import sys
 from dotenv import load_dotenv
 
 from servicenow_client import ServiceNowClient
@@ -15,8 +16,24 @@ load_dotenv()
 # Initialize FastMCP server
 mcp = FastMCP("ServiceNow Operations")
 
-# Initialize ServiceNow client
-snow_client = ServiceNowClient()
+# Initialize ServiceNow client with error handling
+try:
+    snow_client = ServiceNowClient()
+    print("✓ ServiceNow client initialized successfully")
+except ValueError as e:
+    print(f"✗ Configuration Error: {e}")
+    print("\nPlease configure the following environment variables in Render:")
+    print("1. Go to your Render dashboard")
+    print("2. Select your web service")
+    print("3. Go to Environment tab")
+    print("4. Add the following environment variables:")
+    print("   - SERVICENOW_INSTANCE (e.g., dev12345.service-now.com)")
+    print("   - SERVICENOW_USERNAME")
+    print("   - SERVICENOW_PASSWORD")
+    sys.exit(1)
+except Exception as e:
+    print(f"✗ Unexpected error initializing ServiceNow client: {e}")
+    sys.exit(1)
 
 
 @mcp.tool()
