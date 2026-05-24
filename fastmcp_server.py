@@ -20,7 +20,7 @@ snow_client = ServiceNowClient()
 
 
 @mcp.tool()
-def search_tickets(query: str, limit: int = 10) -> Dict[str, Any]:
+def search_tickets(query: str, limit: str = "10") -> Dict[str, Any]:
     """
     Search for ServiceNow tickets based on a query string.
     
@@ -116,7 +116,7 @@ def create_ticket(
 
 
 @mcp.tool()
-def get_all_tickets(limit: int = 50) -> Dict[str, Any]:
+def get_all_tickets(limit: str = "50") -> Dict[str, Any]:
     """
     Retrieve all incident tickets from ServiceNow.
     
@@ -153,7 +153,7 @@ def get_all_tickets(limit: int = 50) -> Dict[str, Any]:
 
 
 @mcp.tool()
-def get_priority_tickets(priority: int = 1, limit: int = 20) -> Dict[str, Any]:
+def get_priority_tickets(priority: str = "1", limit: str = "20") -> Dict[str, Any]:
     """
     Get incident tickets filtered by priority level.
     
