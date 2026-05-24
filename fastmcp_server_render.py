@@ -364,20 +364,21 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT", 10000))
     host = os.getenv("HOST", "0.0.0.0")
     
-    print(f"🚀 Starting FastMCP server on {host}:{port}")
+    print(f"🚀 Starting FastMCP server")
     print(f"📡 Transport: SSE (Server-Sent Events)")
+    print(f"🔌 Port: {port} (from environment)")
+    print(f"🌐 Host: {host}")
     print(f"🔗 ServiceNow Instance: {os.getenv('SERVICENOW_INSTANCE', 'Not configured')}")
+    print("-" * 50)
+    
+    # FastMCP's run() method doesn't accept host/port parameters
+    # It reads from environment variables internally when using SSE transport
+    # Make sure PORT and HOST are set in environment
+    os.environ["PORT"] = str(port)
+    os.environ["HOST"] = host
     
     # Run the FastMCP server with SSE transport
-    # Pass host and port as transport_kwargs
-    try:
-        mcp.run(transport="sse", port=port, host=host)
-    except TypeError as e:
-        # If host/port not supported, try with environment variables
-        print(f"Note: {e}")
-        print("Trying alternative method with environment variables...")
-        os.environ["PORT"] = str(port)
-        os.environ["HOST"] = host
-        mcp.run(transport="sse")
+    # The SSE transport will use uvicorn which reads PORT and HOST from environment
+    mcp.run(transport="sse")
 
 # Made with Bob
