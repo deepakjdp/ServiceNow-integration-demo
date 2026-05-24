@@ -349,6 +349,6 @@ if __name__ == "__main__":
     
     # Run the FastMCP server with SSE transport
     # For Render deployment, we need to bind to the provided port
-    mcp.run(transport="sse", host=host, port=port)
+    mcp.run(transport="sse", host="0.0.0.0", port=10000)
 
 # Made with Bob
