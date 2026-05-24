@@ -105,7 +105,19 @@ class ServiceNowClient:
                 ticket_data['category'] = category
             
             response = self.incident_resource.create(payload=ticket_data)
-            return self._format_ticket(response)
+            
+            # The create() method returns a Response object, not a dict
+            # We need to extract the data from it
+            if hasattr(response, 'one'):
+                # pysnow Response object - get the first (and only) record
+                record = response.one()
+                return self._format_ticket(record)
+            elif isinstance(response, dict):
+                # Already a dictionary
+                return self._format_ticket(response)
+            else:
+                # Fallback - try to convert to dict
+                return self._format_ticket(dict(response))
         except Exception as e:
             raise Exception(f"Error creating ticket: {str(e)}")
     
