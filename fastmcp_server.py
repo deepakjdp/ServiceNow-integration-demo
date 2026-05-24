@@ -216,12 +216,13 @@ def get_priority_tickets(priority: int = 1, limit: int = 20) -> Dict[str, Any]:
 
 
 @mcp.tool()
-def get_ticket_by_number(ticket_number: str, **kwargs) -> Dict[str, Any]:
+def get_ticket_by_number(ticket_number: str, limit: Optional[int] = None) -> Dict[str, Any]:
     """
     Retrieve a specific ticket by its ticket number.
     
     Args:
         ticket_number: The ticket number (e.g., "INC0010001")
+        limit: Optional parameter (ignored, for compatibility)
     
     Returns:
         Dictionary containing success status and ticket details
@@ -230,7 +231,7 @@ def get_ticket_by_number(ticket_number: str, **kwargs) -> Dict[str, Any]:
         get_ticket_by_number("INC0010001")
     """
     try:
-        # Ignore any extra parameters passed by the client
+        # Note: limit parameter is ignored for single ticket lookup
         ticket = snow_client.get_ticket_by_number(ticket_number)
         
         if ticket is None:
