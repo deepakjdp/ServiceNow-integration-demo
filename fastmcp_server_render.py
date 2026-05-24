@@ -360,8 +360,6 @@ def create_incident_prompt(issue: str) -> str:
 
 
 if __name__ == "__main__":
-    import uvicorn
-    
     # Get port from environment variable (Render provides this)
     port = int(os.getenv("PORT", 10000))
     host = os.getenv("HOST", "0.0.0.0")
@@ -370,15 +368,16 @@ if __name__ == "__main__":
     print(f"📡 Transport: SSE (Server-Sent Events)")
     print(f"🔗 ServiceNow Instance: {os.getenv('SERVICENOW_INSTANCE', 'Not configured')}")
     
-    # Get the ASGI app from FastMCP
-    app = mcp.get_asgi_app(transport="sse")
-    
-    # Run with uvicorn for Render deployment
-    uvicorn.run(
-        app,
-        host=host,
-        port=port,
-        log_level="info"
-    )
+    # Run the FastMCP server with SSE transport
+    # Pass host and port as transport_kwargs
+    try:
+        mcp.run(transport="sse", port=port, host=host)
+    except TypeError as e:
+        # If host/port not supported, try with environment variables
+        print(f"Note: {e}")
+        print("Trying alternative method with environment variables...")
+        os.environ["PORT"] = str(port)
+        os.environ["HOST"] = host
+        mcp.run(transport="sse")
 
 # Made with Bob
