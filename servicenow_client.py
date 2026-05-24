@@ -11,8 +11,27 @@ class ServiceNowClient:
     
     def __init__(self):
         """Initialize ServiceNow client"""
+        # Validate configuration
+        if not settings.validate_servicenow_config():
+            raise ValueError(
+                "ServiceNow configuration is incomplete. Please set the following environment variables:\n"
+                "- SERVICENOW_INSTANCE\n"
+                "- SERVICENOW_USERNAME\n"
+                "- SERVICENOW_PASSWORD"
+            )
+        
+        # Clean up instance name - remove .service-now.com if present
+        # pysnow will add it automatically
+        instance = settings.servicenow_instance
+        if instance:
+            # Remove common suffixes that pysnow adds automatically
+            instance = instance.replace('.service-now.com', '')
+            instance = instance.replace('https://', '')
+            instance = instance.replace('http://', '')
+            instance = instance.strip('/')
+        
         self.client = pysnow.Client(
-            instance=settings.servicenow_instance,
+            instance=instance,
             user=settings.servicenow_username,
             password=settings.servicenow_password
         )
