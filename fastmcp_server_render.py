@@ -224,33 +224,34 @@ def get_priority_tickets(priority: str = "1", limit: str = "20") -> Dict[str, An
         4: "Low",
         5: "Planning"
     }
-    logger.info(f"🎯 get_priority_tickets called - priority: {priority} ({priority_names.get(priority, 'Unknown')}), limit: {limit}")
     try:
         # Convert parameters to int if they're strings
-        priority = int(priority)
-        limit = int(limit)
+        priority_int = int(priority)
+        limit_int = int(limit)
         
-        if priority < 1 or priority > 5:
-            logger.warning(f"Invalid priority value: {priority}")
+        logger.info(f"🎯 get_priority_tickets called - priority: {priority_int} ({priority_names.get(priority_int, 'Unknown')}), limit: {limit_int}")
+        
+        if priority_int < 1 or priority_int > 5:
+            logger.warning(f"Invalid priority value: {priority_int}")
             return {
                 "success": False,
                 "error": "Priority must be between 1 and 5"
             }
         
-        if limit < 1 or limit > 100:
-            logger.warning(f"Invalid limit value: {limit}")
+        if limit_int < 1 or limit_int > 100:
+            logger.warning(f"Invalid limit value: {limit_int}")
             return {
                 "success": False,
                 "error": "Limit must be between 1 and 100"
             }
         
-        tickets = snow_client.get_priority_tickets(priority=priority, limit=limit)
-        logger.info(f"✓ Found {len(tickets)} tickets with priority {priority} ({priority_names.get(priority)})")
+        tickets = snow_client.get_priority_tickets(priority=priority_int, limit=limit_int)
+        logger.info(f"✓ Found {len(tickets)} tickets with priority {priority_int} ({priority_names.get(priority_int, 'Unknown')})")
         
         return {
             "success": True,
-            "priority": priority,
-            "priority_name": priority_names.get(priority, "Unknown"),
+            "priority": priority_int,
+            "priority_name": priority_names.get(priority_int, "Unknown"),
             "count": len(tickets),
             "tickets": tickets
         }
