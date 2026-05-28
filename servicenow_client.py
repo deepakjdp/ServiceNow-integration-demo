@@ -145,7 +145,8 @@ class ServiceNowClient:
             List of high priority ticket dictionaries
         """
         try:
-            qb = pysnow.QueryBuilder().field('priority').equals(priority)
+            # Convert priority to string for ServiceNow API comparison
+            qb = pysnow.QueryBuilder().field('priority').equals(str(priority))
             
             response = self.incident_resource.get(
                 query=qb,
